@@ -19,6 +19,6 @@ void USART_ESC_Code(char escape_code[]);
 
 void USART_print_bit(uint8_t character);
 
-void USART_print_num(double number);
+void USART_print_num(int number);
 
 #endif /* SRC_P2_DIGITAL_MULTIMETER_USART_H_ */

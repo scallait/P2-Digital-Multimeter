@@ -61,8 +61,8 @@ void USART_print(char character[]){
 }
 
 #define ASCII_OFFSET 48
-void USART_print_num(double num){
-	num *= 100;					// Get up to 2 decimal precision
+
+void USART_print_num(int num){
 	int num_int = (int)(num); 	// Truncate
 
 	uint8_t dig1 = num_int / 100;

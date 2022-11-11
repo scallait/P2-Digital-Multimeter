@@ -5,6 +5,11 @@
  *      Author: Seb
  */
 #include "ADC.h"
+#include "USART.h"
+#include <stdio.h>
+#include <string.h>
+
+double calibration_factor = 1.0;
 
 void ADC_init(){
 	// Turn on clock to ADC
@@ -44,7 +49,6 @@ void ADC_init(){
 
 	// Configure interrupts
 	NVIC->ISER[0] |= 1 << (0x1F & ADC1_2_IRQn);
-	//Enabling Interrupts(In Blake's Code)
 	ADC1->IER |= ADC_IER_EOCIE;
 	ADC1->ISR &= ~(ADC_IER_EOCIE);
 
@@ -52,17 +56,19 @@ void ADC_init(){
 
 }
 
-#define CALIBRATION_VAL 1.02
-double ADC_Conversion(uint16_t analog_Val){
+#define CALIBRATION_FACTOR 0.985
+#define MAX_ANALOG 4095.0
+#define REF_VOLTAGE 330
 
-	double dig_Val = analog_Val / 4096.0 * 3.3 * CALIBRATION_VAL; //converting analog to digital
+int ADC_Conversion(uint16_t analog_Val){
+	int dig_Val = (analog_Val / MAX_ANALOG) * REF_VOLTAGE * CALIBRATION_FACTOR; //converting analog to digital
 	return dig_Val;
 }
 
-void ADC_Avg(double * ADC_Arr, double * output){
+void ADC_Avg(int * ADC_Arr, int * output){
 	//Finding Min/Max/Avg of 20 sample points
 	//output is MIN, MAX, AVG
-	double total = 0; //total to be used to find Avg
+	int total = 0; //total to be used to find Avg
 	output[0] = ADC_Arr[0]; //Setting Original min to compare to
 	output[1] = ADC_Arr[0];
 
@@ -76,6 +82,6 @@ void ADC_Avg(double * ADC_Arr, double * output){
 		total += ADC_Arr[i]; //Adding val to total
 	}
 
-	output[2] = total/ 20.0; //Finding Avg of Sample set
+	output[2] = total/ 20; //Finding Avg of Sample set
 
 }

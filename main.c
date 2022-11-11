@@ -16,7 +16,7 @@ void SystemClock_Config(void);
 // Global Variables
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
-double ADC_Arr[20];
+int ADC_Arr[20];
 
 /**
   * @brief  The application entry point.
@@ -57,9 +57,9 @@ int main(void)
 			  }
 		  }
 	  }
-	  HAL_Delay(500);
+	  HAL_Delay(1000);
 	  //Find min/max/average and store them
-	  double Avg_Dig_Vals[3]; // These are saved as integers not doubles
+	  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
 	  ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
 
 	  //Print to Terminal

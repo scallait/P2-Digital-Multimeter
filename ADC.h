@@ -12,8 +12,8 @@
 
 void ADC_init();
 
-double ADC_Conversion(uint16_t analog_Val);
+int ADC_Conversion(uint16_t analog_Val);
 
-void ADC_Avg(double * ADC_Arr, double * output);
+void ADC_Avg(int * ADC_Arr, int * output);
 
 #endif /* SRC_P2_DIGITAL_MULTIMETER_ADC_H_ */
