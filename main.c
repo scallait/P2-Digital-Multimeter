@@ -8,6 +8,7 @@
 #include "main.h"
 #include "ADC.h"
 #include "USART.h"
+#include "DM.h"
 
 /* Private variables & Function Prototypes ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
@@ -31,8 +32,7 @@ int main(void)
   // Set up data transfer protocol
   USART_init();
 
-  USART_ESC_Code("[1J"); // Clear screen from cursor up
-  USART_ESC_Code("[0J"); // Clear screen from cursor down
+  GUI_init();
 
   // Set Up ADC
   ADC_init();
@@ -63,15 +63,15 @@ int main(void)
 	  ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
 
 	  //Print to Terminal
-	  USART_print("Values: ( Min = ");
-	  USART_print_num(Avg_Dig_Vals[0]);
-	  USART_print(", Max = ");
-	  USART_print_num(Avg_Dig_Vals[1]);
-	  USART_print(", Average = ");
-	  USART_print_num(Avg_Dig_Vals[2]);
-	  USART_print(")");
-	  USART_ESC_Code("[1B");
-	  USART_ESC_Code("[100D");
+	  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
+//	  USART_print("Values: ( Min = ");
+//	  USART_print_num(Avg_Dig_Vals[0]);
+//	  USART_print(", Max = ");
+//	  USART_print_num(Avg_Dig_Vals[1]);
+//	  USART_print(", Average = ");
+//	  USART_print_num(Avg_Dig_Vals[2]);
+//	  USART_print(")");
+//	  USART_ESC_Code("[100D");
 
 	  ADC1->CR |= ADC_CR_ADSTART; //start recording again
   }
