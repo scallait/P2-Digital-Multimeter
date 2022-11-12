@@ -14,6 +14,8 @@ void GUI_init();
 
 void update_DC(int min, int max, int avg);
 
-void update_AC();
+void update_AC(int Vrms, int ptop, int freq);
+
+int calc_RMS(int ptop);
 
 #endif /* SRC_P2_DIGITAL_MULTIMETER_DM_H_ */

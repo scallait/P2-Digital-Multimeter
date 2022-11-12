@@ -36,11 +36,8 @@ void GUI_init(){
 	USART_ESC_Code("[11;0H");	// Move cursor to position (0,6)
 	USART_print("| Avg: 0.00 V                   | Freq: 0    Hz                 |");
 	USART_ESC_Code("[12;0H");	// Move cursor to position (0,7)
-	for(int i=0; i < 3; i++){
-		USART_print("|                               |                               |");
-		USART_ESC_Code("[100D");	// Reset cursor to left side of screen
-		USART_ESC_Code("[1B");
-	}
+	USART_print("|                               |                               |");
+	USART_ESC_Code("[13;0H");	// Move cursor to position (0,5)
 	USART_print("-----------------------------------------------------------------");
 }
 
@@ -56,8 +53,30 @@ void update_DC(int min, int max, int avg){
 	// Print Avg
 	USART_ESC_Code("[11;8H");
 	USART_print_num(avg);
+
+	USART_ESC_Code("[14;0H");	// Move cursor out of table
 }
 
-void update_AC(){
+void update_AC(int vrms, int ptop, int freq){
+	// Print Vrms
+	USART_ESC_Code("[7;41H");	// Row 7 Column 41
+	USART_print_num(vrms);
 
+	// Print Peak to Peak value
+	USART_ESC_Code("[9;41H");
+	USART_print_num(ptop);
+
+	// Print Freq
+	USART_ESC_Code("[11;41H");
+	USART_print_num(freq);
+
+	USART_ESC_Code("[14;0H");	// Move cursor out of table
+}
+
+#define SQRT2x2 0.35355339059
+
+void calc_RMS(int PtoP){
+	/* Formula Vrms = 1 / ( 2 * sqrt(2)) * Vptop */
+	int result = SQRT2x2 * PtoP;
+	return result;
 }
