@@ -75,8 +75,7 @@ void update_AC(int vrms, int ptop, int freq){
 
 #define SQRT2x2 0.35355339059
 
-void calc_RMS(int PtoP){
+int calc_RMS(int PtoP){
 	/* Formula Vrms = 1 / ( 2 * sqrt(2)) * Vptop */
-	int result = SQRT2x2 * PtoP;
-	return result;
+	return SQRT2x2 * PtoP;
 }
