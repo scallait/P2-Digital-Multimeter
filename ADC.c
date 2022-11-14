@@ -40,7 +40,7 @@ void ADC_init(){
 	ADC1->SQR1 &= ~(0b11111 << ADC_SQR1_SQ1_Pos);
 	ADC1->SQR1 |= 0x1 << ADC_SQR1_SQ1_Pos; // Set channel 1?
 	ADC1->SMPR1 &= ~(0b111 << ADC_SMPR1_SMP1_Pos); // Clear SMPR (2.5 ADC Clock Cycles)
-	//ADC1->SMPR1 |= 1 << ADC_SMPR1_SMP1_Pos; // Set to 6.5 ADC clock cycles
+	ADC1->SMPR1 |= 6 << ADC_SMPR1_SMP1_Pos; // Set to 247.5 ADC clock cycles
 
 	// Configure GPIO for ADC (Can be done any time)
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
