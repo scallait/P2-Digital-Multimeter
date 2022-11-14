@@ -41,11 +41,19 @@ int main(void)
   while (1)
   {
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
+	  uint16_t read_Number = 0; //Counter to keep track of the possible reads that could be taken
 	  while(samples_Taken < 20){ //Taking sets of 20 samples at a time
-		  if(ADC_flag){
+		  if(ACD_flag){
+			  read_Number ++; //indexing possible read
+		  }
 
+		  /*
+		   * if ADC sample time is about 5 microsec, it will need to only take a value
+		   * every 10 samples to get a range of about 10 ms
+		   */
+		  if(ADC_flag && read_Number >= 10){
+			  read_Number = 0; //resetting read Number to wait to read in ever 10 cycles
 			  //Convert Analog to Digital and stores it in Array
-			  //TO DO: Calibrate the values to be close to input voltage
 			  ADC_Arr[samples_Taken] = ADC_Conversion(ADC_value);
 
 			  ADC_flag = 0;	//Reseting conversion flag
