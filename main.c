@@ -43,7 +43,7 @@ int main(void)
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
 	  uint16_t read_Number = 0; //Counter to keep track of the possible reads that could be taken
 	  while(samples_Taken < 20){ //Taking sets of 20 samples at a time
-		  if(ACD_flag){
+		  if(ADC_flag){
 			  read_Number ++; //indexing possible read
 		  }
 
@@ -72,14 +72,7 @@ int main(void)
 
 	  //Print to Terminal
 	  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
-//	  USART_print("Values: ( Min = ");
-//	  USART_print_num(Avg_Dig_Vals[0]);
-//	  USART_print(", Max = ");
-//	  USART_print_num(Avg_Dig_Vals[1]);
-//	  USART_print(", Average = ");
-//	  USART_print_num(Avg_Dig_Vals[2]);
-//	  USART_print(")");
-//	  USART_ESC_Code("[100D");
+
 
 	  ADC1->CR |= ADC_CR_ADSTART; //start recording again
   }
