@@ -56,13 +56,25 @@ void ADC_init(){
 
 }
 
-#define CALIBRATION_FACTOR 0.985
 #define MAX_ANALOG 4095.0
 #define REF_VOLTAGE 330
 
-int ADC_Conversion(uint16_t analog_Val){
-	int dig_Val = (analog_Val / MAX_ANALOG) * REF_VOLTAGE * CALIBRATION_FACTOR; //converting analog to digital
-	return dig_Val;
+int ADC_Conversion(uint16_t dig_Val){
+	// Calibration
+	if(dig_Val < 434){ // 0 -> 0.35 V ?
+		dig_Val *= 1.02;
+	}
+	if(dig_Val < 1861){ // 0.35 -> 1.5 V
+		dig_Val *= 1.005;
+	}
+	else{ // 1.5 -> 3.3 V
+		dig_Val *= 1.0025;
+	}
+
+	// Calculation
+	int analog_Val = (dig_Val / MAX_ANALOG) * REF_VOLTAGE; //converting analog to digital
+
+	return analog_Val;
 }
 
 void ADC_Avg(int * ADC_Arr, int * output){
