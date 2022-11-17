@@ -17,7 +17,12 @@ void SystemClock_Config(void);
 // Global Variables
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
-int ADC_Arr[20];
+uint16_t ADC_Arr[7500];
+uint16_t t_Max;
+uint16_t t_Min;
+uint16_t sample_Max;
+uint16_t sample_Min;
+
 
 /**
   * @brief  The application entry point.
@@ -40,35 +45,77 @@ int main(void)
 
   while (1)
   {
+	  uint16_t DC_Offset = 0;
+	  uint16_t Vpp = 0;
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
-	  uint16_t read_Number = 0; //Counter to keep track of the possible reads that could be taken
-	  while(samples_Taken < 20){ //Taking sets of 20 samples at a time
-		  if(ADC_flag){
-			  read_Number ++; //indexing possible read
+	  uint16_t read_Num = 0; //setting value to take in every 10 ADC reads
+	  while(samples_Taken < 7500){ //Taking sets of 20 samples at a time
+		  if(ADC_flag && samples_Taken == 0){
+			  //storing the first case to both max and min
+			  t_Max = ADC_value;
+			  t_Min = ADC_value;
 		  }
-
-		  /*
-		   * if ADC sample time is about 5 microsec, it will need to only take a value
-		   * every 10 samples to get a range of about 10 ms
-		   */
-		  if(ADC_flag && read_Number >= 10){
-			  read_Number = 0; //resetting read Number to wait to read in ever 10 cycles
+		  if(ADC_flag && read_Num == 9){ //takes value every tenth read
+			  read_Num = 0; //resetting read
 			  //Convert Analog to Digital and stores it in Array
-			  ADC_Arr[samples_Taken] = ADC_Conversion(ADC_value);
-
+			  ADC_Arr[samples_Taken] = ADC_value;
 			  ADC_flag = 0;	//Reseting conversion flag
+
+			  if(ADC_value >= t_Max + 24){
+				  //Replacing new max
+				  t_Max = ADC_value;
+				  sample_Max = samples_Taken;
+			  }
+			  else if(ADC_value <= t_Min - 24){
+				  //Replacing new min
+				  t_Min = ADC_value;
+				  sample_Max = samples_Taken;
+			  }
+
 			  samples_Taken ++;	//step to take next sample
 
-			  if(samples_Taken < 20){
+			  if(samples_Taken < 7500){
 				  //Checking to insure that interrupts don't happen during Avg calculation
 				  ADC1->CR |= ADC_CR_ADSTART; //start recording again
 			  }
 		  }
+		  else{
+			  read_Num ++;
+		  }
+
 	  }
+	  //Getting peak to peak voltage and DC offset
+	  Vpp = t_Max - t_Min;
+	  //TO DO: if Peak to Peak is < 0.5V must be DC
+
+
+
+	  DC_Offset = t_Max - (Vpp/2);
+
+	  uint16_t index = 0;
+	  uint16_t num_Zeros = 0; //number of zero crossings
+	  uint16_t zero_sample_Num[3];
+	  while(num_Zeros < 3){ //checking for zero crossings only need 3
+		  if(ADC_Arr[index] > DC_Offset - 24 && ADC_Arr[index] < DC_Offset + 24){ //finding points where wave crosses zero
+			  if(index > (zero_sample_Num[num_Zeros] + 100) && num_Zeros != 0){
+				  //checking to insure the zero crossing value is not in the same area as previous read
+				  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
+				  num_Zeros ++;
+			  }
+		  }
+	  }
+
+	  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
+	  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
+
+
 	  HAL_Delay(1000);
 	  //Find min/max/average and store them
 	  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
-	  ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
+
+	  //ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
+
+
 
 	  //Print to Terminal
 	  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
