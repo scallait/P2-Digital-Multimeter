@@ -114,7 +114,7 @@ int main(void)
 	  //Find min/max/average and store them
 	  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
 
-	  ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
+	  //ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
 
 
 
