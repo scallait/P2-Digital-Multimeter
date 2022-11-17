@@ -116,10 +116,10 @@ int main(void)
 
 	  //ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
 
-
+	  update_AC(0, Vpp, sample_Freq);
 
 	  //Print to Terminal
-	  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
+	  //update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
 
 
 	  ADC1->CR |= ADC_CR_ADSTART; //start recording again
