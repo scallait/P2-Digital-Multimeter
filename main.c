@@ -81,6 +81,7 @@ int main(void)
 		  }
 		  else{
 			  read_Num ++;
+			  ADC_flag = 0;	//Reseting conversion flag
 		  }
 
 	  }
@@ -92,12 +93,12 @@ int main(void)
 
 	  DC_Offset = t_Max - (Vpp/2);
 
-	  uint16_t index = 0;
-	  uint16_t num_Zeros = 0; //number of zero crossings
+	  uint16_t index = 0; //index of ADC_Arr
+	  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
 	  uint16_t zero_sample_Num[3];
 	  while(num_Zeros < 3){ //checking for zero crossings only need 3
 		  if(ADC_Arr[index] > DC_Offset - 24 && ADC_Arr[index] < DC_Offset + 24){ //finding points where wave crosses zero
-			  if(index > (zero_sample_Num[num_Zeros] + 100) && num_Zeros != 0){
+			  if(index > (zero_sample_Num[num_Zeros] + 74) && num_Zeros != 0){
 				  //checking to insure the zero crossing value is not in the same area as previous read
 				  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
 				  num_Zeros ++;
@@ -113,7 +114,7 @@ int main(void)
 	  //Find min/max/average and store them
 	  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
 
-	  //ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
+	  ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
 
 
 
