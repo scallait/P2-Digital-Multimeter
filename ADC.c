@@ -138,7 +138,7 @@ int find_Freq(uint16_t * ADC_Arr, uint16_t * zeros, int array_len , int * output
 	int avg_diff = diff1 + diff2 / 2;
 
 	int freq = avg_diff; //gives the differences between every other crossing
-	freq = (1/(freq * 640.5) * 48000000); //translation to Frequency
+	freq = (1.0/(freq * 640.5) * 48000000); //translation to Frequency
 
 	return freq;
 
