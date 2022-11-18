@@ -76,8 +76,6 @@ int ADC_Conversion(uint16_t dig_Val){
 	return analog_Val;
 }
 
-#define ARRAY_LENGTH 7500
-
 void ADC_Avg(int * ADC_Arr, int array_length, int * output){
 	//Finding Min/Max/Avg of 20 sample points
 	//output is MIN, MAX, AVG
@@ -96,5 +94,44 @@ void ADC_Avg(int * ADC_Arr, int array_length, int * output){
 	}
 
 	output[2] = total / array_length; //Finding Avg of Sample set
-
 }
+
+#define MAX_VOLTAGE 330
+#define MIN_VOLTAGE 0
+#define V_TOLERANCE 2
+
+void Find_AC_Params(int * ADC_Arr, int array_len , int * output){
+	//output is [MAX1, MAX2, MIN1, MIN2, VPP]
+//
+//	int total = 0; 				// total to be used to find Avg
+//	int max1 = MIN_VOLTAGE;		// Minimum Possible Voltage Value
+//	int max2 = MIN_VOLTAGE;		// Minimum Possible Voltage Value
+//	int min1 = MAX_VOLTAGE; 	// Maximum possible voltage value
+//	int min2 = MAX_VOLTAGE ; 	// Maximum possible voltage value
+//	int max_counter = 0;
+//	int min_counter = 0;
+//
+//	int MIN_FLAG = 0;			// Flag set when AC signal is around min
+//	int MAX_FLAG = 0;			// Flag set when AC signal is around max
+//
+//	min1 = ADC_Arr[0]; //Setting Original min to compare to
+//	min2 = ADC_Arr[0];
+//
+//	for(int i = 0; i < array_len; i++){
+//		if(ADC_Arr[i] < min1 ){ //checking for new Min
+//			min1 = ADC_Arr[i];
+//			MIN_FLAG = 1;	// AC signal is around min
+//			MAX_FLAG = 0;
+//		}
+//		if(ADC_Arr[i] > max1){ //checking for new Max
+//			max1 = ADC_Arr[i];
+//			MAX_FLAG = 1;
+//			MIN_FLAG = 0;
+//		}
+//
+//		total += ADC_Arr[i]; //Adding val to total
+//	}
+//
+//	output[2] = total / array_len; //Finding Avg of Sample set
+}
+

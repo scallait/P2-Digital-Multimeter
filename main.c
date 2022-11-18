@@ -16,6 +16,8 @@ void SystemClock_Config(void);
 
 // Global Variables
 #define ADC_ARR_LEN 7500
+#define V_TOLERANCE 2
+#define MIN_PTP_VAL 50
 
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
@@ -24,6 +26,8 @@ uint16_t t_Max;
 uint16_t t_Min;
 uint16_t sample_Max;
 uint16_t sample_Min;
+
+uint8_t DC_FLAG = 0;
 
 
 /**
@@ -52,7 +56,8 @@ int main(void)
 	  uint16_t Vpp = 0;
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
 	  uint16_t read_Num = 0; //setting value to take in every 10 ADC reads
-	  while(samples_Taken < ADC_ARR_LEN){ //Taking sets of 20 samples at a time
+
+	  while(samples_Taken < ADC_ARR_LEN){ // Sample Lens
 		  if(ADC_flag && samples_Taken == 0){
 			  //storing the first case to both max and min
 			  t_Max = ADC_value;
@@ -62,15 +67,18 @@ int main(void)
 			  read_Num = 0; //resetting read
 
 			  //Convert Analog to Digital and stores it in Array
-			  ADC_Arr[samples_Taken] = ADC_value;
+			  ADC_Arr[samples_Taken] = ADC_Conversion(ADC_value);
 			  ADC_flag = 0;	//Reseting conversion flag
 
-			  if(ADC_value >= t_Max + 24){
+			  // Find Absolute Max During Period
+			  if(ADC_value >= t_Max ){
 				  //Replacing new max
 				  t_Max = ADC_value;
 				  sample_Max = samples_Taken;
 			  }
-			  else if(ADC_value <= t_Min - 24){
+
+			  // Find Absolute Min During Period
+			  else if(ADC_value <= t_Min){
 				  //Replacing new min
 				  t_Min = ADC_value;
 				  sample_Max = samples_Taken;
@@ -91,40 +99,62 @@ int main(void)
 
 	  //Getting peak to peak voltage and DC offset
 	  Vpp = t_Max - t_Min;
+
+
 	  //TO DO: if Peak to Peak is < 0.5V must be DC
-
-
-
-	  DC_Offset = t_Max - (Vpp/2);
-
-	  uint16_t index = 0; //index of ADC_Arr
-	  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
-	  uint16_t zero_sample_Num[3];
-	  while(num_Zeros < 3){ //checking for zero crossings only need 3
-		  if(ADC_Arr[index] > DC_Offset - 24 && ADC_Arr[index] < DC_Offset + 24){ //finding points where wave crosses zero
-			  if(index > (zero_sample_Num[num_Zeros] + 74) && num_Zeros != 0){
-				  //checking to insure the zero crossing value is not in the same area as previous read
-				  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
-				  num_Zeros ++;
-			  }
-		  }
+	  if(Vpp < MIN_PTP_VAL){
+		  DC_FLAG = 1; // Indicates a DC Signal
+	  }
+	  else{
+		  DC_FLAG = 0; // Indicates an AC Signal
 	  }
 
-	  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
-	  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
+	  // If an AC Signal
+	  if(DC_FLAG == 0){
+		  DC_Offset = t_Max - (Vpp/2);
 
+		  	  uint8_t extrema_Flag = 1; // Flag if it reaches a max or min
+		  	  uint16_t index = 0; //index of ADC_Arr
+		  	  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
+		  	  uint16_t zero_sample_Num[3];
 
+		  	  while(num_Zeros < 3){ //checking for zero crossings only need 3
+		  		  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
+		  			 ADC_Arr[index] < (DC_Offset + V_TOLERANCE) &&
+		  			 (extrema_Flag == 1) ) //checking to insure the zero crossing value is not in the same area as previous read
+
+		  		  { //finding points where wave crosses zero
+		  			  extrema_Flag = 0;
+		  			  if(index > (zero_sample_Num[num_Zeros] + 74) && num_Zeros != 0) //*******NOTE: CHANGE 74 TO WHATEVER THE ANALOG EQUIVALENT IS 0->330
+		  			  {
+		  				  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
+		  				  num_Zeros ++;
+		  			  }
+		  		  }
+		  		  else{
+		  			  extrema_Flag = 1;
+		  		  }
+		  	  }
+
+		  	  //**********NOTE: These are now analog values 0->330
+		  	  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
+		  	  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
+
+			  update_AC(0, Vpp, sample_Freq);
+	  }
+	  // If a DC Signal
+	  else{
+		  //Find min/max/average and store them
+		  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
+
+		  ADC_Avg(ADC_Arr, ADC_ARR_LEN ,Avg_Dig_Vals);
+
+		  //Print to Terminal
+		  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
+	  }
+
+	  // Temporary Delay for Easier Value Reading
 	  HAL_Delay(1000);
-	  //Find min/max/average and store them
-	  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
-
-	  ADC_Avg(ADC_Arr, ADC_ARR_LEN ,Avg_Dig_Vals);
-
-	  update_AC(0, Vpp, sample_Freq);
-
-	  //Print to Terminal
-	  //update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
-
 
 	  ADC1->CR |= ADC_CR_ADSTART; //start recording again
   }
