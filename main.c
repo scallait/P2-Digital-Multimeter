@@ -24,6 +24,7 @@ uint16_t ADC_value = 0;
 uint16_t ADC_Arr[ADC_ARR_LEN];
 uint16_t sample_Max;
 uint16_t sample_Min;
+int volatile counter = 10;
 
 
 uint8_t DC_FLAG = 0;
@@ -87,6 +88,8 @@ int main(void)
 				  sample_Max = samples_Taken;
 			  }
 
+			  samples_Taken++;
+
 			  if(samples_Taken < ADC_ARR_LEN){
 				  //Checking to insure that interrupts don't happen during Avg calculation
 				  ADC1->CR |= ADC_CR_ADSTART; //start recording again
@@ -131,6 +134,7 @@ int main(void)
 				  extrema_Flag = 1;
 			  }
 		  }
+
 		  int AC_Values[4];
 		  Find_AC_Params(ADC_Arr, zero_sample_Num, ADC_ARR_LEN , AC_Values);
 
@@ -152,14 +156,10 @@ int main(void)
 		  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
 	  }
 
-	  // Temporary Delay for Easier Value Reading
-	  //HAL_Delay(500);
-
 	  ADC1->CR |= ADC_CR_ADSTART; //start recording again
   }
 }
 
-int counter = 10;
 void ADC1_2_IRQHandler(){
 	if(ADC1->ISR & ADC_ISR_EOC){
 		ADC1->ISR &= ~(ADC_ISR_EOC);
@@ -169,6 +169,7 @@ void ADC1_2_IRQHandler(){
 			counter = 11;
 		}
 		counter--;
+		ADC1->CR |= ADC_CR_ADSTART; //start recording again
 	}
 }
 
