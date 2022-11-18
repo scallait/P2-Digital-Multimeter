@@ -60,6 +60,7 @@ int main(void)
 	  uint16_t first_Val = 1;
 
 	  while(samples_Taken < ADC_ARR_LEN){ // Sample Lens
+
 		  if(ADC_flag && first_Val){
 			  //storing the first case to both max and min
 			  t_Max = ADC_Conversion(ADC_value);
@@ -67,11 +68,11 @@ int main(void)
 			  first_Val = 0;
 		  }
 		  if(ADC_flag){ //takes value every tenth read
-
+			  int analogVal = ADC_Conversion(ADC_value);
 
 			  //Convert Analog to Digital and stores it in Array
 			  if(read_Num == 9){
-				  ADC_Arr[samples_Taken] = ADC_Conversion(ADC_value);
+				  ADC_Arr[samples_Taken] = analogVal;
 				  read_Num = 0; //resetting read
 			  }
 			  else{
@@ -80,14 +81,14 @@ int main(void)
 			  ADC_flag = 0;	//Reseting conversion flag
 
 			  // Find Absolute Max During Period
-			  if(ADC_Conversion(ADC_value) > t_Max ){
+			  if(analogVal > t_Max ){
 				  //Replacing new max
 				  t_Max = ADC_Conversion(ADC_value);
 				  sample_Max = samples_Taken;
 			  }
 
 			  // Find Absolute Min During Period
-			  else if(ADC_Conversion(ADC_value) < t_Min){
+			  else if(analogVal < t_Min){
 				  //Replacing new min
 				  t_Min = ADC_Conversion(ADC_value);
 				  sample_Max = samples_Taken;
