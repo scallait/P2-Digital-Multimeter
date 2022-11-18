@@ -22,10 +22,9 @@ void SystemClock_Config(void);
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
 uint16_t ADC_Arr[ADC_ARR_LEN];
-uint16_t t_Max;
-uint16_t t_Min;
 uint16_t sample_Max;
 uint16_t sample_Min;
+
 
 uint8_t DC_FLAG = 0;
 
@@ -56,44 +55,51 @@ int main(void)
 	  uint16_t Vpp = 0;
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
 	  uint16_t read_Num = 0; //setting value to take in every 10 ADC reads
+	  uint16_t t_Max = 0;
+	  uint16_t t_Min = 0;
+	  uint16_t first_Val = 1;
 
 	  while(samples_Taken < ADC_ARR_LEN){ // Sample Lens
-		  if(ADC_flag && samples_Taken == 0){
+		  if(ADC_flag && first_Val){
 			  //storing the first case to both max and min
 			  t_Max = ADC_Conversion(ADC_value);
 			  t_Min = ADC_Conversion(ADC_value);
+			  first_Val = 0;
 		  }
-		  if(ADC_flag && read_Num == 9){ //takes value every tenth read
-			  read_Num = 0; //resetting read
+		  if(ADC_flag){ //takes value every tenth read
+
 
 			  //Convert Analog to Digital and stores it in Array
-			  ADC_Arr[samples_Taken] = ADC_Conversion(ADC_value);
+			  if(read_Num == 9){
+				  ADC_Arr[samples_Taken] = ADC_Conversion(ADC_value);
+				  read_Num = 0; //resetting read
+			  }
+			  else{
+				  read_Num ++;
+			  }
 			  ADC_flag = 0;	//Reseting conversion flag
 
 			  // Find Absolute Max During Period
-			  if(ADC_value >= t_Max ){
+			  if(ADC_Conversion(ADC_value) > t_Max ){
 				  //Replacing new max
-				  t_Max = ADC_value;
+				  t_Max = ADC_Conversion(ADC_value);
 				  sample_Max = samples_Taken;
 			  }
 
 			  // Find Absolute Min During Period
-			  else if(ADC_value <= t_Min){
+			  else if(ADC_Conversion(ADC_value) < t_Min){
 				  //Replacing new min
-				  t_Min = ADC_value;
+				  t_Min = ADC_Conversion(ADC_value);
 				  sample_Max = samples_Taken;
 			  }
-
-			  samples_Taken ++;	//step to take next sample
+			  if(read_Num == 0){
+				  samples_Taken ++;	//step to take next sample
+			  }
 
 			  if(samples_Taken < ADC_ARR_LEN){
 				  //Checking to insure that interrupts don't happen during Avg calculation
 				  ADC1->CR |= ADC_CR_ADSTART; //start recording again
 			  }
-		  }
-		  else{
-			  read_Num ++;
-			  ADC_flag = 0;	//Reseting conversion flag
 		  }
 	  }
 
@@ -156,7 +162,7 @@ int main(void)
 	  }
 
 	  // Temporary Delay for Easier Value Reading
-	  HAL_Delay(1000);
+	  //HAL_Delay(500);
 
 	  ADC1->CR |= ADC_CR_ADSTART; //start recording again
   }
