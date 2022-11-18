@@ -15,9 +15,11 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 
 // Global Variables
+#define ADC_ARR_LEN 7500
+
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
-uint16_t ADC_Arr[7500];
+uint16_t ADC_Arr[ADC_ARR_LEN];
 uint16_t t_Max;
 uint16_t t_Min;
 uint16_t sample_Max;
@@ -37,6 +39,7 @@ int main(void)
   // Set up data transfer protocol
   USART_init();
 
+  // Set up UI
   GUI_init();
 
   // Set Up ADC
@@ -49,7 +52,7 @@ int main(void)
 	  uint16_t Vpp = 0;
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
 	  uint16_t read_Num = 0; //setting value to take in every 10 ADC reads
-	  while(samples_Taken < 7500){ //Taking sets of 20 samples at a time
+	  while(samples_Taken < ADC_ARR_LEN){ //Taking sets of 20 samples at a time
 		  if(ADC_flag && samples_Taken == 0){
 			  //storing the first case to both max and min
 			  t_Max = ADC_value;
@@ -57,6 +60,7 @@ int main(void)
 		  }
 		  if(ADC_flag && read_Num == 9){ //takes value every tenth read
 			  read_Num = 0; //resetting read
+
 			  //Convert Analog to Digital and stores it in Array
 			  ADC_Arr[samples_Taken] = ADC_value;
 			  ADC_flag = 0;	//Reseting conversion flag
@@ -74,7 +78,7 @@ int main(void)
 
 			  samples_Taken ++;	//step to take next sample
 
-			  if(samples_Taken < 7500){
+			  if(samples_Taken < ADC_ARR_LEN){
 				  //Checking to insure that interrupts don't happen during Avg calculation
 				  ADC1->CR |= ADC_CR_ADSTART; //start recording again
 			  }
@@ -83,8 +87,8 @@ int main(void)
 			  read_Num ++;
 			  ADC_flag = 0;	//Reseting conversion flag
 		  }
-
 	  }
+
 	  //Getting peak to peak voltage and DC offset
 	  Vpp = t_Max - t_Min;
 	  //TO DO: if Peak to Peak is < 0.5V must be DC
@@ -114,7 +118,7 @@ int main(void)
 	  //Find min/max/average and store them
 	  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
 
-	  //ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
+	  ADC_Avg(ADC_Arr, ADC_ARR_LEN ,Avg_Dig_Vals);
 
 
 

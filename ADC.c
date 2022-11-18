@@ -32,14 +32,14 @@ void ADC_init(){
 	/* Note - Can read calibration factor from ADC_CALFACT register */
 
 	// Turn on ADC (Pg. 519)
-	ADC1->ISR |= ADC_ISR_ADRDY; // Clear the ARDY bit by setting to 1 in ISR
+	ADC1->ISR |= ADC_ISR_ADRDY; 		// Clear the ARDY bit by setting to 1 in ISR
 	ADC1->CR |= ADC_CR_ADEN;
 	while(!(ADC1->ISR & ADC_ISR_ADRDY)); // Set once ADC is ready
 
 	// Configure the ADC
 	ADC1->SQR1 &= ~(0b11111 << ADC_SQR1_SQ1_Pos);
 	ADC1->SQR1 |= 0x1 << ADC_SQR1_SQ1_Pos; // Set channel 1?
-	ADC1->SMPR1 &= ~(0b111 << ADC_SMPR1_SMP1_Pos); // Clear SMPR (2.5 ADC Clock Cycles)
+	ADC1->SMPR1 &= ~(0b111 << ADC_SMPR1_SMP1_Pos); // Clear SMPR (Sets it to 2.5 ADC Clock Cycles)
 	ADC1->SMPR1 |= 7 << ADC_SMPR1_SMP1_Pos; // Set to 247.5 ADC clock cycles
 
 	// Configure GPIO for ADC (Can be done any time)
@@ -53,7 +53,6 @@ void ADC_init(){
 	ADC1->ISR &= ~(ADC_IER_EOCIE);
 
 	__enable_irq();
-
 }
 
 #define MAX_ANALOG 4095.0
@@ -77,14 +76,16 @@ int ADC_Conversion(uint16_t dig_Val){
 	return analog_Val;
 }
 
-void ADC_Avg(int * ADC_Arr, int * output){
+#define ARRAY_LENGTH 7500
+
+void ADC_Avg(int * ADC_Arr, int array_length, int * output){
 	//Finding Min/Max/Avg of 20 sample points
 	//output is MIN, MAX, AVG
 	int total = 0; //total to be used to find Avg
 	output[0] = ADC_Arr[0]; //Setting Original min to compare to
 	output[1] = ADC_Arr[0];
 
-	for(int i = 0; i < 20; i++){
+	for(int i = 0; i < array_length; i++){
 		if(ADC_Arr[i] < output[0]){ //checking for new Min
 			output[0] = ADC_Arr[i];
 		}
@@ -94,6 +95,6 @@ void ADC_Avg(int * ADC_Arr, int * output){
 		total += ADC_Arr[i]; //Adding val to total
 	}
 
-	output[2] = total/ 20; //Finding Avg of Sample set
+	output[2] = total / array_length; //Finding Avg of Sample set
 
 }
