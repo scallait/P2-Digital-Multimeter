@@ -133,15 +133,14 @@ int main(void)
 		  }
 
 		  int AC_Values[4] = {0};
-		  Find_AC_Params(ADC_Arr, zero_sample_Num, ADC_ARR_LEN , AC_Values);
+		  int freq = find_Freq(ADC_Arr, zero_sample_Num, ADC_ARR_LEN , AC_Values);
 
 		  int vrms = calc_RMS(Vpp);
 
 		  //**********NOTE: These are now analog values 0->330
-		  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
-		  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
-
-		  update_AC(vrms, Vpp, sample_Freq);
+//		  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
+//		  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
+		  update_AC(vrms, Vpp, freq);
 	  }
 	  // If a DC Signal
 	  else{

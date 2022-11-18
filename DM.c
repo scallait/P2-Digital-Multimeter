@@ -68,7 +68,7 @@ void update_AC(int vrms, int ptop, int freq){
 
 	// Print Freq
 	USART_ESC_Code("[11;41H");
-	void USART_print_freq(freq);
+	USART_print_freq(freq);
 
 	USART_ESC_Code("[14;0H");	// Move cursor out of table
 }

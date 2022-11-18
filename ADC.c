@@ -100,52 +100,60 @@ void ADC_Avg(uint16_t * ADC_Arr, int array_length, int * output){
 #define MIN_VOLTAGE 0
 #define V_TOLERANCE 2
 
-void Find_AC_Params(uint16_t * ADC_Arr, uint16_t * zeros, int array_len , int * output){
+int find_Freq(uint16_t * ADC_Arr, uint16_t * zeros, int array_len , int * output){
 	//output is [MAX1, MIN1, MAX2, MIN2]
 
 	int index = 0;
-	int max = MIN_VOLTAGE;		// Minimum Possible Voltage Value
-	int min = MAX_VOLTAGE; 	// Maximum possible voltage value
+	int max_index = MIN_VOLTAGE;		// Minimum Possible Voltage Value
+	int min_index = MAX_VOLTAGE; 	// Maximum possible voltage value
 	uint8_t min_flag = 0;
 
-	min = ADC_Arr[0]; 			//Setting Original min to compare to
-	min = ADC_Arr[0];
+	min_index = ADC_Arr[0]; 			//Setting Original min to compare to
+	min_index = ADC_Arr[0];
 
 	for(int i = 0; i < array_len; i++){
 		// Reaches a threshold, so write to array
 		if(ADC_Arr[i] == zeros[index]){
 			if(min_flag){	// Left a min region
-				output[index] = min;
+				output[index] = min_index;
 			}
 			else{	// Left a max region
-				output[index] = max;
+				output[index] = max_index;
 			}
 			index++;
 		}
 
-		if(ADC_Arr[i] < min ){ //checking for new Min
-			min = ADC_Arr[i];
+		if(ADC_Arr[i] < ADC_Arr[min_index] ){ //checking for new min_index
+			min_index = i;
 			min_flag = 1;
 		}
-
-		else{ // (ADC_Arr[i] > max) checking for new Max
-			max = ADC_Arr[i];
+		if(ADC_Arr[i] > ADC_Arr[max_index]){ // checking for new Max
+			max_index = i;
 			min_flag = 0;
 		}
 	}
 
-	// Set to [MAX1, MIN1, MAX2, MIN2] format if not already
-	if(output[0] < output[1]){
+	int diff1 = output[3] - output[1];
+	int diff2 = output[2] - output[0];
+	int avg_diff = diff1 + diff2 / 2;
 
-		// Swap first 2 values
-		int temp = output[1];
-		output[1] = output[0];
-		output[0] = temp;
+	int freq = avg_diff; //gives the differences between every other crossing
+	freq = (1/(freq * 640.5) * 48000000); //translation to Frequency
 
-		// Swap 2nd two values
-		temp = output[3];
-		output[3] = output[2];
-		output[2] = temp;
-	}
+	return freq;
+
+//	// Set to [MAX1, MIN1, MAX2, MIN2] format if not already
+//	if(output[0] < output[1]){
+//
+//		// Swap first 2 values
+//		int temp = output[1];
+//		output[1] = output[0];
+//		output[0] = temp;
+//
+//		// Swap 2nd two values
+//		temp = output[3];
+//		output[3] = output[2];
+//		output[2] = temp;
+//	}
 }
 
