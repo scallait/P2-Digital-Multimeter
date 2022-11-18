@@ -169,11 +169,16 @@ int main(void)
   }
 }
 
+int counter = 10;
 void ADC1_2_IRQHandler(){
 	if(ADC1->ISR & ADC_ISR_EOC){
 		ADC1->ISR &= ~(ADC_ISR_EOC);
 		ADC_value = ADC1->DR;
-		ADC_flag = 1;
+		if(counter == 0){
+			ADC_flag = 1;
+			counter = 11;
+		}
+		counter--;
 	}
 }
 
