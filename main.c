@@ -54,7 +54,6 @@ int main(void)
 	  uint16_t DC_Offset = 0;
 	  uint16_t Vpp = 0;
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
-	  uint16_t read_Num = 0; //setting value to take in every 10 ADC reads
 	  uint16_t t_Max = 0;
 	  uint16_t t_Min = 0;
 	  uint16_t first_Val = 1;
@@ -71,30 +70,21 @@ int main(void)
 			  int analogVal = ADC_Conversion(ADC_value);
 
 			  //Convert Analog to Digital and stores it in Array
-			  if(read_Num == 9){
-				  ADC_Arr[samples_Taken] = analogVal;
-				  read_Num = 0; //resetting read
-			  }
-			  else{
-				  read_Num ++;
-			  }
+			  ADC_Arr[samples_Taken] = analogVal;
 			  ADC_flag = 0;	//Reseting conversion flag
 
 			  // Find Absolute Max During Period
 			  if(analogVal > t_Max ){
 				  //Replacing new max
-				  t_Max = ADC_Conversion(ADC_value);
+				  t_Max = analogVal;
 				  sample_Max = samples_Taken;
 			  }
 
 			  // Find Absolute Min During Period
 			  else if(analogVal < t_Min){
 				  //Replacing new min
-				  t_Min = ADC_Conversion(ADC_value);
+				  t_Min = analogVal;
 				  sample_Max = samples_Taken;
-			  }
-			  if(read_Num == 0){
-				  samples_Taken ++;	//step to take next sample
 			  }
 
 			  if(samples_Taken < ADC_ARR_LEN){
