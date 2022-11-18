@@ -21,4 +21,6 @@ void USART_print_bit(uint8_t character);
 
 void USART_print_num(int number);
 
+void USART_print_freq(int num);
+
 #endif /* SRC_P2_DIGITAL_MULTIMETER_USART_H_ */

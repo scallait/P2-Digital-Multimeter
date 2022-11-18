@@ -68,7 +68,55 @@ void update_AC(int vrms, int ptop, int freq){
 
 	// Print Freq
 	USART_ESC_Code("[11;41H");
-	USART_print_num(freq);
+	void USART_print_freq(freq);
+
+	USART_ESC_Code("[14;0H");	// Move cursor out of table
+}
+
+void clear_DC(){
+	// Print Min
+	USART_ESC_Code("[7;8H");	// First digit is printed at 7
+	USART_print_bit('-');
+	USART_ESC_Code("[7;10H");
+	USART_print_bit('-');
+	USART_print_bit('-');
+
+	// Print Max
+	USART_ESC_Code("[9;8H");
+	USART_print_bit('-');
+	USART_ESC_Code("[9;10H");
+	USART_print_bit('-');
+	USART_print_bit('-');
+
+	// Print Avg
+	USART_ESC_Code("[11;8H");
+	USART_print_bit('-');
+	USART_ESC_Code("[11;10H");
+	USART_print_bit('-');
+	USART_print_bit('-');
+
+	USART_ESC_Code("[14;0H");	// Move cursor out of table
+}
+
+
+void clear_AC(){
+	// Print Vrms
+	USART_ESC_Code("[7;41H");	// Row 7 Column 41
+	USART_print_bit('-');
+	USART_ESC_Code("[7;43H");
+	USART_print_bit('-');
+	USART_print_bit('-');
+
+	// Print Peak to Peak value
+	USART_ESC_Code("[9;41H");
+	USART_print_bit('-');
+	USART_ESC_Code("[9;43H");
+	USART_print_bit('-');
+	USART_print_bit('-');
+
+	// Print Freq
+	USART_ESC_Code("[11;41H");
+	USART_print_bit('-');
 
 	USART_ESC_Code("[14;0H");	// Move cursor out of table
 }

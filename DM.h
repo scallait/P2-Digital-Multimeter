@@ -18,4 +18,8 @@ void update_AC(int Vrms, int ptop, int freq);
 
 int calc_RMS(int ptop);
 
+void clear_DC();
+
+void clear_AC();
+
 #endif /* SRC_P2_DIGITAL_MULTIMETER_DM_H_ */

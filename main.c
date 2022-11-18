@@ -89,18 +89,13 @@ int main(void)
 			  }
 
 			  samples_Taken++;
-
-			  if(samples_Taken < ADC_ARR_LEN){
-				  //Checking to insure that interrupts don't happen during Avg calculation
-				  ADC1->CR |= ADC_CR_ADSTART; //start recording again
-			  }
 		  }
 	  }
 
 	  //Getting peak to peak voltage and DC offset
 	  Vpp = t_Max - t_Min;
 
-	  //TO DO: if Peak to Peak is < 0.5V must be DC
+	  //If Peak to Peak is < 0.5V must be DC
 	  if(Vpp < MIN_PTP_VAL){
 		  DC_FLAG = 1; // Indicates a DC Signal
 	  }
@@ -110,14 +105,15 @@ int main(void)
 
 	  // If an AC Signal
 	  if(DC_FLAG == 0){
+		  clear_DC();
 		  DC_Offset = t_Max - (Vpp/2);
 
 		  uint8_t extrema_Flag = 1; // Flag if it reaches a max or min
 		  uint16_t index = 0; //index of ADC_Arr
 		  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
-		  uint16_t zero_sample_Num[3];
+		  uint16_t zero_sample_Num[3] = {0};
 
-		  while(num_Zeros < 3){ //checking for zero crossings only need 3
+		  while(num_Zeros < 3 && (index < ADC_ARR_LEN)){ //checking for zero crossings only need 3
 			  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
 				 ADC_Arr[index] < (DC_Offset + V_TOLERANCE) &&
 				 (extrema_Flag == 1) ) //checking to insure the zero crossing value is not in the same area as previous read
@@ -133,12 +129,14 @@ int main(void)
 			  else{
 				  extrema_Flag = 1;
 			  }
+			  index++;
 		  }
 
-		  int AC_Values[4];
+		  int AC_Values[4] = {0};
 		  Find_AC_Params(ADC_Arr, zero_sample_Num, ADC_ARR_LEN , AC_Values);
 
 		  int vrms = calc_RMS(Vpp);
+
 		  //**********NOTE: These are now analog values 0->330
 		  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
 		  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
@@ -147,6 +145,7 @@ int main(void)
 	  }
 	  // If a DC Signal
 	  else{
+		  clear_AC();
 		  //Find min/max/average and store them
 		  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
 
