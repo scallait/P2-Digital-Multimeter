@@ -60,8 +60,8 @@ int main(void)
 	  while(samples_Taken < ADC_ARR_LEN){ // Sample Lens
 		  if(ADC_flag && samples_Taken == 0){
 			  //storing the first case to both max and min
-			  t_Max = ADC_value;
-			  t_Min = ADC_value;
+			  t_Max = ADC_Conversion(ADC_value);
+			  t_Min = ADC_Conversion(ADC_value);
 		  }
 		  if(ADC_flag && read_Num == 9){ //takes value every tenth read
 			  read_Num = 0; //resetting read
@@ -100,7 +100,6 @@ int main(void)
 	  //Getting peak to peak voltage and DC offset
 	  Vpp = t_Max - t_Min;
 
-
 	  //TO DO: if Peak to Peak is < 0.5V must be DC
 	  if(Vpp < MIN_PTP_VAL){
 		  DC_FLAG = 1; // Indicates a DC Signal
@@ -113,34 +112,37 @@ int main(void)
 	  if(DC_FLAG == 0){
 		  DC_Offset = t_Max - (Vpp/2);
 
-		  	  uint8_t extrema_Flag = 1; // Flag if it reaches a max or min
-		  	  uint16_t index = 0; //index of ADC_Arr
-		  	  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
-		  	  uint16_t zero_sample_Num[3];
+		  uint8_t extrema_Flag = 1; // Flag if it reaches a max or min
+		  uint16_t index = 0; //index of ADC_Arr
+		  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
+		  uint16_t zero_sample_Num[3];
 
-		  	  while(num_Zeros < 3){ //checking for zero crossings only need 3
-		  		  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
-		  			 ADC_Arr[index] < (DC_Offset + V_TOLERANCE) &&
-		  			 (extrema_Flag == 1) ) //checking to insure the zero crossing value is not in the same area as previous read
+		  while(num_Zeros < 3){ //checking for zero crossings only need 3
+			  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
+				 ADC_Arr[index] < (DC_Offset + V_TOLERANCE) &&
+				 (extrema_Flag == 1) ) //checking to insure the zero crossing value is not in the same area as previous read
 
-		  		  { //finding points where wave crosses zero
-		  			  extrema_Flag = 0;
-		  			  if(index > (zero_sample_Num[num_Zeros] + 74) && num_Zeros != 0) //*******NOTE: CHANGE 74 TO WHATEVER THE ANALOG EQUIVALENT IS 0->330
-		  			  {
-		  				  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
-		  				  num_Zeros ++;
-		  			  }
-		  		  }
-		  		  else{
-		  			  extrema_Flag = 1;
-		  		  }
-		  	  }
+			  { //finding points where wave crosses zero
+				  extrema_Flag = 0;
+				  if(index > (zero_sample_Num[num_Zeros] + 74) && num_Zeros != 0) //*******NOTE: CHANGE 74 TO WHATEVER THE ANALOG EQUIVALENT IS 0->330
+				  {
+					  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
+					  num_Zeros ++;
+				  }
+			  }
+			  else{
+				  extrema_Flag = 1;
+			  }
+		  }
+		  int AC_Values[4];
+		  Find_AC_Params(ADC_Arr, zero_sample_Num, ADC_ARR_LEN , AC_Values);
 
-		  	  //**********NOTE: These are now analog values 0->330
-		  	  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
-		  	  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
+		  int vrms = calc_RMS(Vpp);
+		  //**********NOTE: These are now analog values 0->330
+		  int sample_Freq = zero_sample_Num[2] - zero_sample_Num[0]; //gives the differences between every other crossing
+		  sample_Freq = (1/(sample_Freq * 640.5)*48000000); //translation to Frequency(IDK if this works properly)
 
-			  update_AC(0, Vpp, sample_Freq);
+		  update_AC(vrms, Vpp, sample_Freq);
 	  }
 	  // If a DC Signal
 	  else{

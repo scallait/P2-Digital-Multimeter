@@ -76,7 +76,7 @@ int ADC_Conversion(uint16_t dig_Val){
 	return analog_Val;
 }
 
-void ADC_Avg(int * ADC_Arr, int array_length, int * output){
+void ADC_Avg(uint16_t * ADC_Arr, int array_length, int * output){
 	//Finding Min/Max/Avg of 20 sample points
 	//output is MIN, MAX, AVG
 	int total = 0; //total to be used to find Avg
@@ -100,38 +100,52 @@ void ADC_Avg(int * ADC_Arr, int array_length, int * output){
 #define MIN_VOLTAGE 0
 #define V_TOLERANCE 2
 
-void Find_AC_Params(int * ADC_Arr, int array_len , int * output){
-	//output is [MAX1, MAX2, MIN1, MIN2, VPP]
-//
-//	int total = 0; 				// total to be used to find Avg
-//	int max1 = MIN_VOLTAGE;		// Minimum Possible Voltage Value
-//	int max2 = MIN_VOLTAGE;		// Minimum Possible Voltage Value
-//	int min1 = MAX_VOLTAGE; 	// Maximum possible voltage value
-//	int min2 = MAX_VOLTAGE ; 	// Maximum possible voltage value
-//	int max_counter = 0;
-//	int min_counter = 0;
-//
-//	int MIN_FLAG = 0;			// Flag set when AC signal is around min
-//	int MAX_FLAG = 0;			// Flag set when AC signal is around max
-//
-//	min1 = ADC_Arr[0]; //Setting Original min to compare to
-//	min2 = ADC_Arr[0];
-//
-//	for(int i = 0; i < array_len; i++){
-//		if(ADC_Arr[i] < min1 ){ //checking for new Min
-//			min1 = ADC_Arr[i];
-//			MIN_FLAG = 1;	// AC signal is around min
-//			MAX_FLAG = 0;
-//		}
-//		if(ADC_Arr[i] > max1){ //checking for new Max
-//			max1 = ADC_Arr[i];
-//			MAX_FLAG = 1;
-//			MIN_FLAG = 0;
-//		}
-//
-//		total += ADC_Arr[i]; //Adding val to total
-//	}
-//
-//	output[2] = total / array_len; //Finding Avg of Sample set
+void Find_AC_Params(uint16_t * ADC_Arr, uint16_t * zeros, int array_len , int * output){
+	//output is [MAX1, MIN1, MAX2, MIN2]
+
+	int index = 0;
+	int max = MIN_VOLTAGE;		// Minimum Possible Voltage Value
+	int min = MAX_VOLTAGE; 	// Maximum possible voltage value
+	uint8_t min_flag = 0;
+
+	min = ADC_Arr[0]; 			//Setting Original min to compare to
+	min = ADC_Arr[0];
+
+	for(int i = 0; i < array_len; i++){
+		// Reaches a threshold, so write to array
+		if(ADC_Arr[i] == zeros[index]){
+			if(min_flag){	// Left a min region
+				output[index] = min;
+			}
+			else{	// Left a max region
+				output[index] = max;
+			}
+			index++;
+		}
+
+		if(ADC_Arr[i] < min ){ //checking for new Min
+			min = ADC_Arr[i];
+			min_flag = 1;
+		}
+
+		else{ // (ADC_Arr[i] > max) checking for new Max
+			max = ADC_Arr[i];
+			min_flag = 0;
+		}
+	}
+
+	// Set to [MAX1, MIN1, MAX2, MIN2] format if not already
+	if(output[0] < output[1]){
+
+		// Swap first 2 values
+		int temp = output[1];
+		output[1] = output[0];
+		output[0] = temp;
+
+		// Swap 2nd two values
+		temp = output[3];
+		output[3] = output[2];
+		output[2] = temp;
+	}
 }
 
