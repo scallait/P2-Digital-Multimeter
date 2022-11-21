@@ -16,7 +16,7 @@ void SystemClock_Config(void);
 
 // Global Variables
 #define ADC_ARR_LEN 7500
-#define V_TOLERANCE 2
+#define V_TOLERANCE 5
 #define MIN_PTP_VAL 50
 
 uint8_t ADC_flag = 0;
@@ -50,6 +50,13 @@ int main(void)
   ADC_init();
   ADC1->CR |= ADC_CR_ADSTART;	// Starts conversion process
 
+  // Set Up test pin
+  RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+  GPIOA->MODER &= ~GPIO_MODER_MODE6;
+  GPIOA->MODER |= GPIO_MODER_MODE6_0; // Set output mode
+  GPIOA->ODR &= ~GPIO_PIN_6; // Start pin low
+
+
   while (1)
   {
 	  uint16_t DC_Offset = 0;
@@ -59,6 +66,8 @@ int main(void)
 	  uint16_t t_Min = 0;
 	  uint16_t first_Val = 1;
 
+
+	  GPIOA->ODR |= GPIO_PIN_6; // Set Pin High
 	  while(samples_Taken < ADC_ARR_LEN){ // Sample Lens
 
 		  if(ADC_flag && first_Val){
@@ -91,6 +100,8 @@ int main(void)
 			  samples_Taken++;
 		  }
 	  }
+	  GPIOA->BRR = GPIO_PIN_6; // Set pin low
+	  HAL_Delay(1000);
 
 	  //Getting peak to peak voltage and DC offset
 	  Vpp = t_Max - t_Min;
@@ -108,32 +119,44 @@ int main(void)
 		  clear_DC();
 		  DC_Offset = t_Max - (Vpp/2);
 
-		  uint8_t extrema_Flag = 1; // Flag if it reaches a max or min
 		  uint16_t index = 0; //index of ADC_Arr
 		  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
 		  uint16_t zero_sample_Num[3] = {0};
+		  int zero_flag = 0;
 
 		  while(num_Zeros < 3 && (index < ADC_ARR_LEN)){ //checking for zero crossings only need 3
-			  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
-				 ADC_Arr[index] < (DC_Offset + V_TOLERANCE) &&
-				 (extrema_Flag == 1) ) //checking to insure the zero crossing value is not in the same area as previous read
+			  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE*2) &&
+				 ADC_Arr[index] < (DC_Offset + V_TOLERANCE*2)) //checking to insure the zero crossing value is not in the same area as previous read
 
 			  { //finding points where wave crosses zero
-				  extrema_Flag = 0;
-				  if(index > (zero_sample_Num[num_Zeros] + 74) && num_Zeros != 0) //*******NOTE: CHANGE 74 TO WHATEVER THE ANALOG EQUIVALENT IS 0->330
+
+				  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
+					 ADC_Arr[index] < (DC_Offset + V_TOLERANCE))
 				  {
-					  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
-					  num_Zeros ++;
+					  // Zero indices must be at least 0.2 volts away !(ADC_Arr[index] > lower_bound && ADC_Arr[index] < upper_bound)
+					  if(zero_flag == 0){
+						  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
+						  num_Zeros ++;
+//						  lower_bound = DC_Offset - V_TOLERANCE * 2;
+//						  upper_bound = DC_Offset - V_TOLERANCE * 2;
+						  zero_flag = 1;
+					  }
 				  }
+
+//				  if((index > zero_sample_Num[num_Zeros]) && (extrema_Flag == 1))
+//				  {
+//					  voltage = ADC_Arr[index];
+//					  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
+//					  num_Zeros ++;
+//				  }
 			  }
 			  else{
-				  extrema_Flag = 1;
+				  zero_flag = 0;
 			  }
 			  index++;
 		  }
 
-		  int AC_Values[4] = {0};
-		  int freq = find_Freq(ADC_Arr, zero_sample_Num, ADC_ARR_LEN , AC_Values);
+		  int freq = find_Freq(ADC_Arr, zero_sample_Num, ADC_ARR_LEN, t_Max, t_Min);
 
 		  int vrms = calc_RMS(Vpp);
 
@@ -158,13 +181,14 @@ int main(void)
   }
 }
 
+
 void ADC1_2_IRQHandler(){
 	if(ADC1->ISR & ADC_ISR_EOC){
 		ADC1->ISR &= ~(ADC_ISR_EOC);
 		ADC_value = ADC1->DR;
 		if(counter == 0){
 			ADC_flag = 1;
-			counter = 11;
+			counter = 18;
 		}
 		counter--;
 		ADC1->CR |= ADC_CR_ADSTART; //start recording again

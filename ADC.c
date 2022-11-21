@@ -100,60 +100,65 @@ void ADC_Avg(uint16_t * ADC_Arr, int array_length, int * output){
 #define MIN_VOLTAGE 0
 #define V_TOLERANCE 2
 
-int find_Freq(uint16_t * ADC_Arr, uint16_t * zeros, int array_len , int * output){
+
+int find_Freq(uint16_t ADC_Arr[], uint16_t * zeros, int array_len, int t_max, int t_min){
 	//output is [MAX1, MIN1, MAX2, MIN2]
+	int output[4] = { 0 };
 
 	int index = 0;
-	int max_index = MIN_VOLTAGE;		// Minimum Possible Voltage Value
-	int min_index = MAX_VOLTAGE; 	// Maximum possible voltage value
+	int max_index = 0;		// Minimum Possible Voltage Value
+	int min_index = 0; 	// Maximum possible voltage value
 	uint8_t min_flag = 0;
-
-	min_index = ADC_Arr[0]; 			//Setting Original min to compare to
-	min_index = ADC_Arr[0];
+	int min_found = 0;
+	int max_found = 0;
 
 	for(int i = 0; i < array_len; i++){
-		// Reaches a threshold, so write to array
-		if(ADC_Arr[i] == zeros[index]){
-			if(min_flag){	// Left a min region
-				output[index] = min_index;
-			}
-			else{	// Left a max region
-				output[index] = max_index;
-			}
+		if(t_max - ADC_Arr[i] <= 1){
+			max_index = i;
+			max_found = 1;
+		}
+		if(ADC_Arr[i] - t_min <= 1){
+			min_index = i;
+			min_found = 1;
+		}
+		if(max_found == 1 && min_found == 1){
+			min_found = 0;
+			max_found = 0;
+			output[index] = max_index;
+			index++;
+			output[index] = min_index;
 			index++;
 		}
-
-		if(ADC_Arr[i] < ADC_Arr[min_index] ){ //checking for new min_index
-			min_index = i;
-			min_flag = 1;
-		}
-		if(ADC_Arr[i] > ADC_Arr[max_index]){ // checking for new Max
-			max_index = i;
-			min_flag = 0;
-		}
+//		// Reaches a threshold, so write to array
+//		if(i == zeros[index]){
+//			if(min_flag){	// Left a min region
+//				output[index] = min_index;
+//			}
+//			else{	// Left a max region
+//				output[index] = max_index;
+//			}
+//			index++;
+//		}
+//
+//		if(ADC_Arr[i] < ADC_Arr[min_index] ){ //checking for new min_index
+//			min_index = i;
+//			min_flag = 1;
+//		}
+//		if(ADC_Arr[i] > ADC_Arr[max_index]){ // checking for new Max
+//			max_index = i;
+//			min_flag = 0;
+//		}
 	}
 
 	int diff1 = output[3] - output[1];
 	int diff2 = output[2] - output[0];
-	int avg_diff = diff1 + diff2 / 2;
+	int avg_diff = (diff1 + diff2) / 2;
 
-	int freq = avg_diff; //gives the differences between every other crossing
-	freq = (1.0/(freq * 640.5) * 48000000); //translation to Frequency
+	// 0.00026667 seconds between indices -> sampling rate ~3750 Hz
+
+	int index_diff = avg_diff; //gives the differences in index between every other crossing
+	int freq = (100000000/(index_diff * 273333)); //translation to Frequency
 
 	return freq;
-
-//	// Set to [MAX1, MIN1, MAX2, MIN2] format if not already
-//	if(output[0] < output[1]){
-//
-//		// Swap first 2 values
-//		int temp = output[1];
-//		output[1] = output[0];
-//		output[0] = temp;
-//
-//		// Swap 2nd two values
-//		temp = output[3];
-//		output[3] = output[2];
-//		output[2] = temp;
-//	}
 }
 
