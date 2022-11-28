@@ -64,10 +64,10 @@ int ADC_Conversion(uint16_t dig_Val){
 		dig_Val *= 1.02;
 	}
 	if(dig_Val < 1861){ // 0.35 -> 1.5 V
-		dig_Val *= 1.005;
+		dig_Val *= 1.008;
 	}
 	else{ // 1.5 -> 3.3 V
-		dig_Val *= 1.0025;
+		dig_Val *= 1.0028;
 	}
 
 	// Calculation

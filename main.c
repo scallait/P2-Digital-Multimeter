@@ -24,7 +24,7 @@ uint16_t ADC_value = 0;
 uint16_t ADC_Arr[ADC_ARR_LEN];
 uint16_t sample_Max;
 uint16_t sample_Min;
-int volatile counter = 10;
+int volatile counter = 18;
 
 
 uint8_t DC_FLAG = 0;
