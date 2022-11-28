@@ -15,7 +15,7 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 
 // Global Variables
-#define ADC_ARR_LEN 7500
+#define ADC_ARR_LEN 4096
 #define V_TOLERANCE 5
 #define MIN_PTP_VAL 50
 
@@ -188,7 +188,7 @@ void ADC1_2_IRQHandler(){
 		ADC_value = ADC1->DR;
 		if(counter == 0){
 			ADC_flag = 1;
-			counter = 18;
+			counter = 36;
 		}
 		counter--;
 		ADC1->CR |= ADC_CR_ADSTART; //start recording again
