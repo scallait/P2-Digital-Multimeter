@@ -1,5 +1,9 @@
 #include "FFT.h"
 
+/* Credit
+ * _fft(), fft(), and show() functions were found on https://rosettacode.org/wiki/Fast_Fourier_transform
+ *
+ */
 double PI;
 
 void _fft(cplx buf[], cplx out[], int n, int step)
@@ -107,20 +111,7 @@ int findFreq(int arraySize, int samplingFreq, uint16_t ADC_arr[])
 
     Resources: https://www.youtube.com/watch?v=3aOaUv3s8RY, https://stackoverflow.com/questions/6740545/understanding-fft-output
     */
+
     // FFT will need a slow sampling rate (3000 Hz is a good value)
 	return freq;
 }
-
-/*
-int main(){
-    int arraySize = 16;
-    int samplingFreq = 32; // Sampling Frequency 16 Hz
-    int finalFreq = 0;
-
-    uint16_t ADC_arr[] = {3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 4, 4, 5, 5, 4, 4};
-
-    finalFreq = findFreq(arraySize, samplingFreq, ADC_arr);
-
-    printf("Frequency: %d\n", finalFreq);
-}
-*/

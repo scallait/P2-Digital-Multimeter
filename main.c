@@ -1,10 +1,3 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  *******************************************************************************/
-
 #include "main.h"
 #include "ADC.h"
 #include "USART.h"
@@ -15,27 +8,20 @@
 UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 
-// Global Variables
+// Global Constants
 #define ADC_ARR_LEN 2048
 #define V_TOLERANCE 5
 #define MIN_PTP_VAL 50
 #define SAMPLING_FREQUENCY 2643
 
+// ADC Reading & Calculation Variables
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
 uint16_t ADC_Arr[ADC_ARR_LEN];
-uint16_t sample_Max;
-uint16_t sample_Min;
 int volatile counter = 25;
-
-
 uint8_t DC_FLAG = 0;
 
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
   /* Reset peripherals, & set system clock */
@@ -82,14 +68,12 @@ int main(void)
 			  if(analogVal > t_Max ){
 				  //Replacing new max
 				  t_Max = analogVal;
-				  sample_Max = samples_Taken;
 			  }
 
 			  // Find Absolute Min During Period
 			  else if(analogVal < t_Min){
 				  //Replacing new min
 				  t_Min = analogVal;
-				  sample_Max = samples_Taken;
 			  }
 
 			  samples_Taken++;
