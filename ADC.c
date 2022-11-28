@@ -71,7 +71,7 @@ int ADC_Conversion(uint16_t dig_Val){
 	}
 
 	// Calculation
-	int analog_Val = (dig_Val / MAX_ANALOG) * REF_VOLTAGE; //converting analog to digital
+	int analog_Val = (dig_Val / MAX_ANALOG) * REF_VOLTAGE + 1; //converting analog to digital
 
 	return analog_Val;
 }

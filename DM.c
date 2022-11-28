@@ -34,10 +34,14 @@ void GUI_init(){
 	USART_ESC_Code("[10;0H");	// Move cursor to position (0,5)
 	USART_print("|                               |                               |");
 	USART_ESC_Code("[11;0H");	// Move cursor to position (0,6)
-	USART_print("| Avg: 0.00 V                   | Freq: 0    Hz                 |");
+	USART_print("| Avg: 0.00 V                   | DC-O: 0.00 V                  |");
 	USART_ESC_Code("[12;0H");	// Move cursor to position (0,7)
 	USART_print("|                               |                               |");
-	USART_ESC_Code("[13;0H");	// Move cursor to position (0,5)
+	USART_ESC_Code("[13;0H");	// Move cursor to position (0,6)
+	USART_print("|                               | Freq: 0    Hz                 |");
+	USART_ESC_Code("[14;0H");	// Move cursor to position (0,7)
+	USART_print("|                               |                               |");
+	USART_ESC_Code("[15;0H");	// Move cursor to position (0,5)
 	USART_print("-----------------------------------------------------------------");
 }
 
@@ -54,10 +58,10 @@ void update_DC(int min, int max, int avg){
 	USART_ESC_Code("[11;8H");
 	USART_print_num(avg);
 
-	USART_ESC_Code("[14;0H");	// Move cursor out of table
+	USART_ESC_Code("[16;0H");	// Move cursor out of table
 }
 
-void update_AC(int vrms, int ptop, int freq){
+void update_AC(int vrms, int ptop, int freq, int DCOffset){
 	// Print Vrms
 	USART_ESC_Code("[7;41H");	// Row 7 Column 41
 	USART_print_num(vrms);
@@ -68,9 +72,13 @@ void update_AC(int vrms, int ptop, int freq){
 
 	// Print Freq
 	USART_ESC_Code("[11;41H");
+	USART_print_num(DCOffset);
+
+	// Print Freq
+	USART_ESC_Code("[13;41H");
 	USART_print_freq(freq);
 
-	USART_ESC_Code("[14;0H");	// Move cursor out of table
+	USART_ESC_Code("[16;0H");	// Move cursor out of table
 }
 
 void clear_DC(){
@@ -95,30 +103,42 @@ void clear_DC(){
 	USART_print_bit('-');
 	USART_print_bit('-');
 
-	USART_ESC_Code("[14;0H");	// Move cursor out of table
+	USART_ESC_Code("[16;0H");	// Move cursor out of table
 }
 
 
 void clear_AC(){
-	// Print Vrms
+	// Clear Vrms
 	USART_ESC_Code("[7;41H");	// Row 7 Column 41
 	USART_print_bit('-');
 	USART_ESC_Code("[7;43H");
 	USART_print_bit('-');
 	USART_print_bit('-');
 
-	// Print Peak to Peak value
+	// Clear Peak to Peak value
 	USART_ESC_Code("[9;41H");
 	USART_print_bit('-');
 	USART_ESC_Code("[9;43H");
 	USART_print_bit('-');
 	USART_print_bit('-');
 
-	// Print Freq
+	// Clear DC Offset
 	USART_ESC_Code("[11;41H");
 	USART_print_bit('-');
+	USART_ESC_Code("[11;43H");
+	USART_print_bit('-');
+	USART_print_bit('-');
 
-	USART_ESC_Code("[14;0H");	// Move cursor out of table
+	// Clear Freq
+	USART_ESC_Code("[13;41H");
+	USART_print_bit('-');
+	USART_print_bit('-');
+	USART_print_bit('-');
+	USART_print_bit('-');
+
+
+
+	USART_ESC_Code("[16;0H");	// Move cursor out of table
 }
 
 #define SQRT2x2 0.35355339059

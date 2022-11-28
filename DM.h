@@ -14,7 +14,7 @@ void GUI_init();
 
 void update_DC(int min, int max, int avg);
 
-void update_AC(int Vrms, int ptop, int freq);
+void update_AC(int Vrms, int ptop, int freq, int DCOffset);
 
 int calc_RMS(int ptop);
 
