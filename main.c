@@ -9,22 +9,24 @@
 #include "ADC.h"
 #include "USART.h"
 #include "DM.h"
+#include "FFT.h"
 
 /* Private variables & Function Prototypes ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 
 // Global Variables
-#define ADC_ARR_LEN 4096
+#define ADC_ARR_LEN 2048
 #define V_TOLERANCE 5
 #define MIN_PTP_VAL 50
+#define SAMPLING_FREQUENCY 1838 // 1 / (1 / (48 MHz) * 640.5 (clock cycles per ADC read) * 36 (1 out of every 36 samples) )
 
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
 uint16_t ADC_Arr[ADC_ARR_LEN];
 uint16_t sample_Max;
 uint16_t sample_Min;
-int volatile counter = 18;
+int volatile counter = 36;
 
 
 uint8_t DC_FLAG = 0;
@@ -101,7 +103,6 @@ int main(void)
 		  }
 	  }
 	  GPIOA->BRR = GPIO_PIN_6; // Set pin low
-	  HAL_Delay(1000);
 
 	  //Getting peak to peak voltage and DC offset
 	  Vpp = t_Max - t_Min;
@@ -119,44 +120,47 @@ int main(void)
 		  clear_DC();
 		  DC_Offset = t_Max - (Vpp/2);
 
-		  uint16_t index = 0; //index of ADC_Arr
-		  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
-		  uint16_t zero_sample_Num[3] = {0};
-		  int zero_flag = 0;
-
-		  while(num_Zeros < 3 && (index < ADC_ARR_LEN)){ //checking for zero crossings only need 3
-			  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE*2) &&
-				 ADC_Arr[index] < (DC_Offset + V_TOLERANCE*2)) //checking to insure the zero crossing value is not in the same area as previous read
-
-			  { //finding points where wave crosses zero
-
-				  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
-					 ADC_Arr[index] < (DC_Offset + V_TOLERANCE))
-				  {
-					  // Zero indices must be at least 0.2 volts away !(ADC_Arr[index] > lower_bound && ADC_Arr[index] < upper_bound)
-					  if(zero_flag == 0){
-						  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
-						  num_Zeros ++;
-//						  lower_bound = DC_Offset - V_TOLERANCE * 2;
-//						  upper_bound = DC_Offset - V_TOLERANCE * 2;
-						  zero_flag = 1;
-					  }
-				  }
-
-//				  if((index > zero_sample_Num[num_Zeros]) && (extrema_Flag == 1))
+//		  uint16_t index = 0; //index of ADC_Arr
+//		  uint16_t num_Zeros = 0; //number of zero crossings(index of zero_sample_Num)
+//		  uint16_t zero_sample_Num[3] = {0};
+//		  int zero_flag = 0;
+//
+//		  while(num_Zeros < 3 && (index < ADC_ARR_LEN)){ //checking for zero crossings only need 3
+//			  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE*2) &&
+//				 ADC_Arr[index] < (DC_Offset + V_TOLERANCE*2)) //checking to insure the zero crossing value is not in the same area as previous read
+//
+//			  { //finding points where wave crosses zero
+//
+//				  if(ADC_Arr[index] > (DC_Offset - V_TOLERANCE) &&
+//					 ADC_Arr[index] < (DC_Offset + V_TOLERANCE))
 //				  {
-//					  voltage = ADC_Arr[index];
-//					  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
-//					  num_Zeros ++;
+//					  // Zero indices must be at least 0.2 volts away !(ADC_Arr[index] > lower_bound && ADC_Arr[index] < upper_bound)
+//					  if(zero_flag == 0){
+//						  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
+//						  num_Zeros ++;
+////						  lower_bound = DC_Offset - V_TOLERANCE * 2;
+////						  upper_bound = DC_Offset - V_TOLERANCE * 2;
+//						  zero_flag = 1;
+//					  }
 //				  }
-			  }
-			  else{
-				  zero_flag = 0;
-			  }
-			  index++;
-		  }
+//
+////				  if((index > zero_sample_Num[num_Zeros]) && (extrema_Flag == 1))
+////				  {
+////					  voltage = ADC_Arr[index];
+////					  zero_sample_Num[num_Zeros] = index; //adding zero crossing to table
+////					  num_Zeros ++;
+////				  }
+//			  }
+//			  else{
+//				  zero_flag = 0;
+//			  }
+//			  index++;
+//		  }
 
-		  int freq = find_Freq(ADC_Arr, zero_sample_Num, ADC_ARR_LEN, t_Max, t_Min);
+		  //int freq = find_Freq(ADC_Arr, zero_sample_Num, ADC_ARR_LEN, t_Max, t_Min);
+
+		  //FFT Freq
+		  int freq = findFreq(ADC_ARR_LEN, SAMPLING_FREQUENCY, ADC_Arr);
 
 		  int vrms = calc_RMS(Vpp);
 

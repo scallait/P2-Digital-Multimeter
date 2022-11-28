@@ -124,6 +124,6 @@ void clear_AC(){
 #define SQRT2x2 0.35355339059
 
 int calc_RMS(int PtoP){
-	/* Formula Vrms = 1 / ( 2 * sqrt(2)) * Vptop */
+	/* Formula Vrms = Vptop / ( 2 * sqrt(2)) */
 	return SQRT2x2 * PtoP;
 }

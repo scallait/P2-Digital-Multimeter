@@ -1,11 +1,6 @@
-#include <stdio.h>
-#include <math.h>
-#include <complex.h>
-
-#define N 16    // Sample Array Size
+#include "FFT.h"
 
 double PI;
-typedef double complex cplx;
 
 void _fft(cplx buf[], cplx out[], int n, int step)
 {
@@ -24,30 +19,84 @@ void _fft(cplx buf[], cplx out[], int n, int step)
 void fft(cplx buf[], int n)
 {
 	cplx out[n];
-	for (int i = 0; i < n; i++) out[i] = buf[i];
+	for (int i = 0; i < n; i++){
+		out[i] = buf[i];
+	}
 
 	_fft(buf, out, n, 1);
 }
 
 
-void show(const char * s, cplx buf[]) {
+void show(const char * s, cplx buf[], int arraySize) {
 	printf("%s", s);
-	for (int i = 0; i < N; i++)
-		//if (!cimag(buf[i]))
-		//	printf("%g ", creal(buf[i]));
-		//else
-			printf("(%g, %g) ", creal(buf[i]), cimag(buf[i]));
+	for (int i = 0; i < arraySize; i++)
+		printf("(%g, %g) ", creal(buf[i]), cimag(buf[i]));
+	printf("\n");
 }
 
-int runFFT()
+// Finds the frequency but finding the FFT index with the largest magnitude
+int findFreqIndex(cplx buf[], int arraySize){
+    int maxIndex = 0;
+    int max = 0;
+    int temp = 0;
+    for(int i=1; i < arraySize/2; i++){ // Start at 2nd index because first is DC voltage (freq = 0 Hz)
+        temp = creal(buf[i]) * creal(buf[i]) + cimag(buf[i]) * cimag(buf[i]);
+        if(temp > max){
+            max = temp;
+            maxIndex = i;
+        }
+    }
+
+    return maxIndex;
+}
+
+int calcFreq(int maxIndex, int arraySize, int samplingFreq){
+    /* -------------Notes---------------------
+    Frequency = k (index of max magnitude FFT result from above) / N (number of samples) * R (sampling frequency)
+    Test Functions:
+        //printf("k / N = %f\n", k / N);
+        //printf("SAMP_FREQ / N = %f\n", SAMPLING_FREQ / N);
+        //freq = k / N * SAMPLING_FREQ;
+
+    */
+
+    // Adjust variables for calculations
+    int freq = 0;
+    double k = (double)maxIndex;
+
+    // Calculate Frequency
+    freq = k / arraySize * samplingFreq;
+
+    return freq;
+}
+
+int findFreq(int arraySize, int samplingFreq, uint16_t ADC_arr[])
 {
 	PI = atan2(1, 1) * 4;
-	//cplx buf[] = {3, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 4}; // 4 Hz
-	cplx buf[] = {3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 4, 4, 5, 5, 4, 4}; // 2 Hz (2nd item in array has largest magnitude)
+	cplx buf[arraySize];
 
-	show("Data: ", buf);
-	fft(buf, N);
-	show("\nFFT : ", buf);
+	// Copy Array
+	for(int i = 0; i < arraySize; i++){
+		buf[i] = (cplx)(ADC_arr[i]);
+	}
+
+	// Perform the FFT
+	fft(buf, arraySize);
+
+	// Test Functions
+	//show("Data: ", buf, arraySize);
+	//show("\nFFT : ", buf, arraySize);
+
+	// Functions to calculate frequency
+	int maxIndex = 0;
+	int freq = 0;
+
+	maxIndex = findFreqIndex(buf, arraySize);
+	freq = calcFreq(maxIndex, arraySize, samplingFreq);
+
+	// Print Results
+	//printf("Frequency: %d\n", freq);
+	//printf("Max Index: %d\n", maxIndex);
 
     /*---Notes
     - You only care about 0-N/2 in the array because the 2nd half is just a reflection of the first half
@@ -58,5 +107,20 @@ int runFFT()
 
     Resources: https://www.youtube.com/watch?v=3aOaUv3s8RY, https://stackoverflow.com/questions/6740545/understanding-fft-output
     */
-	return 0;
+    // FFT will need a slow sampling rate (3000 Hz is a good value)
+	return freq;
 }
+
+/*
+int main(){
+    int arraySize = 16;
+    int samplingFreq = 32; // Sampling Frequency 16 Hz
+    int finalFreq = 0;
+
+    uint16_t ADC_arr[] = {3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 4, 4, 5, 5, 4, 4};
+
+    finalFreq = findFreq(arraySize, samplingFreq, ADC_arr);
+
+    printf("Frequency: %d\n", finalFreq);
+}
+*/
