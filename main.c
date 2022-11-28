@@ -1,28 +1,27 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  *******************************************************************************/
-
 #include "main.h"
 #include "ADC.h"
 #include "USART.h"
 #include "DM.h"
+#include "FFT.h"
 
 /* Private variables & Function Prototypes ---------------------------------------------------------*/
 UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 
-// Global Variables
+// Global Constants
+#define ADC_ARR_LEN 2048
+#define V_TOLERANCE 5
+#define MIN_PTP_VAL 50
+#define SAMPLING_FREQUENCY 2643
+
+// ADC Reading & Calculation Variables
 uint8_t ADC_flag = 0;
 uint16_t ADC_value = 0;
-int ADC_Arr[20];
+uint16_t ADC_Arr[ADC_ARR_LEN];
+int volatile counter = 25;
+uint8_t DC_FLAG = 0;
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
+
 int main(void)
 {
   /* Reset peripherals, & set system clock */
@@ -32,6 +31,7 @@ int main(void)
   // Set up data transfer protocol
   USART_init();
 
+  // Set up UI
   GUI_init();
 
   // Set Up ADC
@@ -40,49 +40,101 @@ int main(void)
 
   while (1)
   {
+	  uint16_t DC_Offset = 0;
+	  uint16_t Vpp = 0;
 	  uint16_t samples_Taken = 0;	//counter for number of samples taken
-	  uint16_t read_Number = 0; //Counter to keep track of the possible reads that could be taken
-	  while(samples_Taken < 20){ //Taking sets of 20 samples at a time
-		  if(ADC_flag){
-			  read_Number ++; //indexing possible read
+	  uint16_t t_Max = 0;
+	  uint16_t t_Min = 0;
+	  uint16_t first_Val = 1;
+
+
+	  GPIOA->ODR |= GPIO_PIN_6; // Set Pin High
+	  while(samples_Taken < ADC_ARR_LEN){ // Sample Lens
+
+		  if(ADC_flag && first_Val){
+			  //storing the first case to both max and min
+			  t_Max = ADC_Conversion(ADC_value);
+			  t_Min = ADC_Conversion(ADC_value);
+			  first_Val = 0;
 		  }
+		  if(ADC_flag){ //takes value every tenth read
+			  int analogVal = ADC_Conversion(ADC_value);
 
-		  /*
-		   * if ADC sample time is about 5 microsec, it will need to only take a value
-		   * every 10 samples to get a range of about 10 ms
-		   */
-		  if(ADC_flag && read_Number >= 10){
-			  read_Number = 0; //resetting read Number to wait to read in ever 10 cycles
 			  //Convert Analog to Digital and stores it in Array
-			  ADC_Arr[samples_Taken] = ADC_Conversion(ADC_value);
-
+			  ADC_Arr[samples_Taken] = analogVal;
 			  ADC_flag = 0;	//Reseting conversion flag
-			  samples_Taken ++;	//step to take next sample
 
-			  if(samples_Taken < 20){
-				  //Checking to insure that interrupts don't happen during Avg calculation
-				  ADC1->CR |= ADC_CR_ADSTART; //start recording again
+			  // Find Absolute Max During Period
+			  if(analogVal > t_Max ){
+				  //Replacing new max
+				  t_Max = analogVal;
 			  }
+
+			  // Find Absolute Min During Period
+			  else if(analogVal < t_Min){
+				  //Replacing new min
+				  t_Min = analogVal;
+			  }
+
+			  samples_Taken++;
 		  }
 	  }
-	  HAL_Delay(1000);
-	  //Find min/max/average and store them
-	  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
-	  ADC_Avg(ADC_Arr,  Avg_Dig_Vals);
 
-	  //Print to Terminal
-	  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
+	  //Getting peak to peak voltage and DC offset
+	  Vpp = t_Max - t_Min;
 
+	  //If Peak to Peak is < 0.5V must be DC
+	  if(Vpp < MIN_PTP_VAL){
+		  DC_FLAG = 1; // Indicates a DC Signal
+	  }
+	  else{
+		  Vpp -= 2; 	// Calibration Value
+		  DC_FLAG = 0; // Indicates an AC Signal
+	  }
+
+	  // If an AC Signal
+	  if(DC_FLAG == 0){
+		  clear_DC();
+		  DC_Offset = t_Max - 3 - (Vpp/2);
+
+		  //Find freq via FFT
+		  int freq = findFreq(ADC_ARR_LEN, SAMPLING_FREQUENCY, ADC_Arr);
+
+		  // Find the RMS Voltage
+		  int vrms = calc_RMS(Vpp);
+
+		  // Update the UI
+		  update_AC(vrms, Vpp, freq, DC_Offset);
+	  }
+
+	  // If a DC Signal
+	  else{
+		  // Clear the AC side of the UI
+		  clear_AC();
+
+		  //Find min/max/average and store them
+		  int Avg_Dig_Vals[3]; // These are saved as integers not doubles
+		  ADC_Avg(ADC_Arr, ADC_ARR_LEN ,Avg_Dig_Vals);
+
+		  //Print to Terminal
+		  update_DC(Avg_Dig_Vals[0], Avg_Dig_Vals[1], Avg_Dig_Vals[2]);
+	  }
 
 	  ADC1->CR |= ADC_CR_ADSTART; //start recording again
   }
 }
 
+
 void ADC1_2_IRQHandler(){
 	if(ADC1->ISR & ADC_ISR_EOC){
 		ADC1->ISR &= ~(ADC_ISR_EOC);
 		ADC_value = ADC1->DR;
-		ADC_flag = 1;
+		if(counter == 0){
+			ADC_flag = 1;
+			counter = 25;
+		}
+		counter--;
+		ADC1->CR |= ADC_CR_ADSTART; //start recording again
 	}
 }
 
